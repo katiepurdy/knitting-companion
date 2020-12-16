@@ -1,0 +1,22 @@
+{
+  "name": "knitting-companion",
+  "version": "1.0.0",
+  "description": "Knitting companion app for an Electron programming class",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "author": "Katie Purdy",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "10.1.2",
+    "electron-rebuild": "^2.3.2"
+  },
+  "dependencies": {
+    "electron-builder": "^22.9.1",
+    "jquery": "^3.5.1",
+    "knex": "^0.21.7",
+    "sqlite3": "^5.0.0"
+  }
+}

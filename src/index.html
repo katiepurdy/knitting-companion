@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    
+    <title>Knitting Companion</title>
+</head>
+<body id="body">
+  <div class="container grid-container">
+    <div class="header">
+      <img class="yarn-icon" src="../assets/images/yarn-icon.svg" alt="Yarn and crochet hook" id="yarn-icon">
+
+      <nav>
+        <ul>
+          <li><a href="https://www.ravelry.com/patterns/knitting">Ravelry</a></li>
+          <li><a href="https://www.youtube.com/results?search_query=knitting">YouTube</a></li>
+          <li><a href="https://www.studioknitsf.com/stitch-patterns-beginner/">Stitch Reference</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="controls-top-row">
+      <h1 class="main-heading">Knitting Companion</h1>
+
+      <ul class="step-navigation">
+        <li><button class="button" id="previous">Previous</button></li>
+        <li><button class="button" id="next">Next</button></li>
+        <li><button class="button" id="repeat">Repeat</button></li>
+      </ul>
+    </div>
+      
+    <div class="controls-bottom-row">
+      <select id="pattern-select">
+        <option data-pattern-id="1">Sample Pattern</option>
+        <option data-pattern-id="2">Another Sample Pattern</option>
+      </select>
+
+      <ul class="individual-step-buttons">
+        <li><button class="button step-button active">1</button></li>
+        <li><button class="button step-button">2</button></li>
+        <li><button class="button step-button">3</button></li>
+        <li><button class="button step-button">4</button></li>
+        <li><button class="button step-button">5</button></li>
+        <li><button class="button step-button">6</button></li>
+        <li><button class="button step-button">7</button></li>
+        <li><button class="button step-button">8</button></li>
+      </ul>
+    </div>
+
+    <div id="left-section">
+
+      <div data-step-id="1" class="step active">
+        <h3 class="step-number">Step 1</h3>
+        <div>
+          <p class="details">After casting on 64 stitches on size 2 needles:</p>
+          <p class="stitches">Row 1 (RS): *K1, P1, K1, P1; rep from * to end of row.</p>
+        </div>
+      </div>
+
+      <div data-step-id="2" class="step">
+        <h3 class="step-number">Step 2</h3>
+        <div>
+          <p class="details"></p>
+          <p class="stitches">Row 2 (WS): * P2, k2; rep from * to end of row.</p>
+        </div>
+      </div>
+
+      <div data-step-id="3" class="step">
+        <h3 class="step-number">Step 3</h3>
+        <div>
+          <p class="details"></p>
+          <p class="stitches">Row 3 (WS): * P2, k2; rep from * to end of row.</p>
+        </div>
+      </div>
+
+      <div data-step-id="4" class="step">
+        <h3 class="step-number">Step 4</h3>
+        <div>
+          <p class="details"></p>
+          <p class="stitches">Row 4 (WS): * P2, k2; rep from * to end of row.</p>
+        </div>
+      </div>
+
+      <div data-step-id="5" class="step">
+        <h3 class="step-number">Step 5</h3>
+        <div>
+          <p class="details"></p>
+          <p class="stitches">Row 5 (WS): * P2, k2; rep from * to end of row.</p>
+        </div>
+      </div>
+
+      <div data-step-id="6" class="step">
+        <h3 class="step-number">Step 6</h3>
+        <div>
+          <p class="details"></p>
+          <p class="stitches">Row 6 (WS): * P2, k2; rep from * to end of row.</p>
+        </div>
+      </div>
+
+      <div data-step-id="7" class="step">
+        <h3 class="step-number">Step 7</h3>
+        <div>
+          <p class="details"></p>
+          <p class="stitches">Row 7 (WS): * P2, k2; rep from * to end of row.</p>
+        </div>
+      </div>
+
+      <div data-step-id="8" class="step">
+        <h3 class="step-number">Step 8</h3>
+        <div>
+          <p class="details"></p>
+          <p class="stitches">Row 8 (WS): * P2, k2; rep from * to end of row.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="current-position">
+      <h2>Currently on Step <span id="current-step">2</span> <span id="repeat-span">(Repeat 1 of 3)</span></h2>
+    </div>
+
+    <div id="right-section-default" class="right-section">
+      <img src="../assets/images/default.png" id="pattern-image" />
+    </div>
+
+    <div id="right-section-add-pattern" class="right-section">
+      <h2>Add a Pattern</h2>
+      <form id="add-pattern-form">
+        <div class="field">
+            <label for="pattern-name">Pattern Name*</label>
+            <div class="control">
+                <input class="input" type="text" name="pattern-name" id="pattern-name" autofocus required>
+            </div>
+            <p id="nameError" class="error"></p>
+        </div>
+
+        <p id="uploaded-image-path"></p>
+        <button class="button" id="image-upload">Choose an image to upload (optional)</button>
+        <p id="imageError" class="error"></p>
+
+        <fieldset>
+          <legend>Step 1</legend>
+          <div class="field">
+            <label for="step-details">Step details (optional)</label>
+            <div class="control">
+                <input class="input" type="text" name="step-details" id="step-details" autofocus required>
+            </div>
+            <p id="stepDetailsError" class="error"></p>
+          </div>
+
+          <div class="field">
+            <label for="step-details">Stitches*</label>
+            <div class="control">
+                <input class="input" type="text" name="step-stitches" id="step-stitches" autofocus required>
+            </div>
+            <p id="stitchesError" class="error"></p>
+          </div>
+        </fieldset>
+        
+        <button class="button" id="add-another-step">Add another step</button>
+        
+        <div class="is-grouped">
+          <button class="button" type="button" id="save-add-pattern">Save</button>
+          <button class="button" type="button" id="cancel-add-pattern">Cancel</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="right-section-edit-pattern" class="right-section">
+      <h2>Edit Current Pattern</h2>
+      <form id="edit-pattern-form">
+        <div class="field">
+            <label for="pattern-name">Pattern Name*</label>
+            <div class="control">
+                <input class="input" type="text" name="pattern-name" id="edit-pattern-name" autofocus required>
+            </div>
+            <p id="editNameError" class="error"></p>
+        </div>
+
+        <p id="edit-uploaded-image-path"></p>
+        <button class="button" id="edit-image-upload">Choose an image to upload (optional)</button>
+        <p id="editImageError" class="error"></p>
+
+        <fieldset>
+          <legend>Step 1</legend>
+          <div class="field">
+            <label for="step-details">Step details (optional)</label>
+            <div class="control">
+                <input class="input" type="text" name="step-details" id="edit-step-details" autofocus required>
+            </div>
+            <p id="editStepDetailsError" class="error"></p>
+          </div>
+
+          <div class="field">
+            <label for="step-details">Stitches*</label>
+            <div class="control">
+                <input class="input" type="text" name="step-stitches" id="edit-step-stitches" autofocus required>
+            </div>
+            <p id="editStitchesError" class="error"></p>
+          </div>
+        </fieldset>
+        
+        <button class="button" id="edit-add-another-step">Add another step</button>
+        
+        <div class="is-grouped">
+          <button class="button" type="button" id="save-edit-pattern">Save</button>
+          <button class="button" type="button" id="cancel-edit-pattern">Cancel</button>
+        </div>
+      </form>
+    </div>
+    
+    <div id="right-section-add-repeat" class="right-section">
+      <h2>Add a Repeat</h2>
+      <h4>Repeat these steps:</h4>
+
+      <form id="add-repeat-form">
+        <label class="checkbox">
+          <input type="checkbox" value="1" class="repeat-checkbox">Step 1: Row 1 (RS): *K1, P1, K1, P1; rep from * to end of row.
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" value="2" class="repeat-checkbox">Step 2: Row 2 (WS): * P2, k2; rep from * to end of row.
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" value="3" class="repeat-checkbox">Row 3 (WS): * P2, k2; rep from * to end of row.
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" value="4" class="repeat-checkbox">Row 4 (WS): * P2, k2; rep from * to end of row.
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" value="5" class="repeat-checkbox">Row 5 (WS): * P2, k2; rep from * to end of row.
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" value="6" class="repeat-checkbox">Row 6 (WS): * P2, k2; rep from * to end of row.
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" value="7" class="repeat-checkbox">Row 7 (WS): * P2, k2; rep from * to end of row.
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" value="8" class="repeat-checkbox">Row 8 (WS): * P2, k2; rep from * to end of row.
+        </label>
+        <p id="repeatStepsError" class="error"></p>
+
+        <label class="numeric">
+          <input type="number" value="1" id="repeat-number">times
+        </label>
+        
+        <div class="is-grouped">
+          <button class="button" id="save-repeat" type="button">Save</button>
+          <button class="button" id="cancel-repeat" type="button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+    <script src="index.js"></script>
+</body>
+</html>

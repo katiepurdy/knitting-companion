@@ -1,0 +1,347 @@
+@font-face {
+    font-family: 'Yrsa';
+    src: url('../fonts/Yrsa/Yrsa-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'Nunito';
+    src: url('../fonts/Nunito/Nunito-Regular.ttf');
+}
+
+:root {
+    --color-primary: #f7f2f2;
+    --color-secondary: #9e005d;
+    --color-tertiary: #ebd8d8;
+    --color-quaternary: #f1f1f4;
+    --color-dark: #3f3f4b;
+    --color-light: #fff;
+    --box-shadow-color:rgba(186, 126, 126, 0.5);
+    --font-family-sans-serif: 'Nunito';
+    --font-family-serif: 'Yrsa';
+    --border-radius: 5px;
+    --transition: 0.3s ease;
+    --vertical-spacing: 1rem;
+    --horizontal-spacing: 1rem;
+    --column-gap: 2rem;
+    --row-gap: 1rem;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    background-color: var(--color-primary);
+    color: var(--color-dark);
+    font-family: var(--font-family-serif);
+    font-weight: 400;
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.yarn-icon {
+    width: 200px;
+}
+
+#left-section {
+    grid-area: left-section;
+    height: 600px;
+    overflow-y: scroll;
+}
+
+#right-section-default {
+    grid-area: right-section;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+#right-section-add-pattern {
+    grid-area: right-section;
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+#right-section-add-repeat {
+    grid-area: right-section;
+    display: none;
+    flex-direction: column;
+}
+
+#right-section-edit-pattern {
+    grid-area: right-section;
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.current-position,
+.right-section {
+    border-radius: var(--border-radius);
+}
+
+.right-section {
+    margin-bottom: calc(2 * var(--vertical-spacing));
+}
+
+#right-section-add-pattern,
+#right-section-edit-pattern,
+#right-section-add-repeat {
+    background-color: var(--color-light);
+    padding: var(--vertical-spacing) var(--horizontal-spacing);
+}
+
+#right-section-add-repeat h4 {
+    margin: 0 0 1rem 0;
+}
+
+#uploaded-image-path {
+    margin-bottom: 0;
+}
+
+#pattern-image {
+    width: 100%;
+}
+
+h1,
+h3 {
+    font-family: var(--font-family-serif);
+    font-weight: 600;
+    margin-top: 0;
+}
+
+h1 {
+    font-size: 3.157rem;
+}
+
+h2 {
+    font-size: 2.369rem;
+    margin-top: 0;
+}
+
+h3 {
+    font-size: 1.777rem;
+}
+
+h4 {
+    font-size: 1.333rem;
+}
+
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+p {
+    font-size: 1.333rem;
+}
+
+a {
+    font-family: var(--font-family-sans-serif);
+    color: var(--color-secondary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.container {
+    height: 100%;
+    padding: 0 5rem;
+}
+
+.grid-container {
+    display: grid;
+    row-gap: var(--row-gap);
+    column-gap: var(--column-gap);
+    grid-template-columns: 60% auto;
+    grid-auto-rows: min-content;
+    grid-template-areas:
+    "header header"
+    "controls-top ."
+    "controls-bottom current-position"
+    "left-section right-section"
+}
+
+.header {
+    grid-area: header;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.header nav ul {
+    display: flex;
+    width: 400px;
+    justify-content: space-between;
+}
+
+.controls-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    grid-area: controls-top;
+}
+
+.controls-bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    align-content: flex-start;
+    grid-area: controls-bottom;
+}
+
+.main-heading {
+    margin-bottom: 0;
+}
+
+.step-navigation {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.step-navigation li {
+    margin-left: var(--horizontal-spacing);
+    margin-bottom: var(--vertical-spacing);
+}
+
+.step-navigation li:first-child {
+    margin-left: 0;
+}
+
+.individual-step-buttons {
+    display: flex;
+    align-content: flex-start;
+    flex-wrap: wrap;
+}
+
+.individual-step-buttons li {
+    margin-left: var(--horizontal-spacing);
+    margin-bottom: var(--vertical-spacing);
+    align-self: flex-start;
+}
+
+.current-position {
+    grid-area: current-position;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.current-position h2 {
+    margin: 0;
+}
+
+button.active {
+    background-color: var(--color-secondary);
+}
+
+.step {
+    border: 4px solid transparent;
+    border-radius: var(--border-radius);
+}
+
+.step.active {
+    border: 4px solid var(--color-secondary);
+    border-radius: var(--border-radius);
+}
+
+.button {
+    padding: 0.75rem 1.75rem;
+    text-align: center;
+    background-color: var(--color-dark);
+    font-family: var(--font-family-sans-serif);
+    font-size: 1rem;
+    border-radius: var(--border-radius);
+    color: var(--color-light);
+    border: 0;
+    transition: var(--transition);
+    display: inline-block;
+}
+
+.edit-button {
+    margin: 0 2rem 2rem 2rem;
+}
+
+.button:hover {
+    background-color: var(--color-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+select {
+    width: auto;
+    font-size: 1rem;
+    padding: 0.75rem;
+    border: 1px solid var(--color-tertiary);
+    border-radius: var(--border-radius);
+}
+
+label {
+    font-size: 1.333rem;
+    font-weight: 600;
+}
+
+label.checkbox {
+    display: block;
+}
+
+input[type=text] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--color-tertiary);
+    border-radius: var(--border-radius);
+    font-size: 1.333rem;
+}
+
+input[type=number] {
+    margin-bottom: var(--vertical-spacing);
+    margin-right: calc(0.5 * var(--horizontal-spacing));
+    text-align: center;
+    width: 2rem;
+}
+
+fieldset {
+    margin-bottom: calc(2 * var(--vertical-spacing));
+    border: 1px solid var(--color-tertiary);
+    border-radius: var(--border-radius);
+}
+
+.error {
+    color: #eb1f00;
+    font-weight: 600;
+}
+
+#add-another-step,
+#edit-add-another-step {
+    margin-bottom: var(--vertical-spacing);
+}
+
+.is-grouped button {
+    margin-right: var(--horizontal-spacing);
+}
+.step {
+    background-color: var(--color-light);
+    padding: var(--vertical-spacing) var(--horizontal-spacing);
+    margin-bottom: var(--vertical-spacing);
+}
+
+.step p:last-child {
+    margin-bottom: 0;
+}
