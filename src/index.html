@@ -37,7 +37,7 @@
         <option data-pattern-id="2">Another Sample Pattern</option>
       </select>
 
-      <ul class="individual-step-buttons">
+      <ul class="individual-step-buttons" id="individial-step-buttons">
         <li><button class="button step-button active">1</button></li>
         <li><button class="button step-button">2</button></li>
         <li><button class="button step-button">3</button></li>
@@ -116,7 +116,7 @@
       </div>
     </div>
 
-    <div class="current-position">
+    <div class="current-position" id="current-position">
       <h2>Currently on Step <span id="current-step">2</span> <span id="repeat-span">(Repeat 1 of 3)</span></h2>
     </div>
 
@@ -139,24 +139,25 @@
         <button class="button" id="image-upload">Choose an image to upload (optional)</button>
         <p id="imageError" class="error"></p>
 
-        <fieldset>
-          <legend>Step 1</legend>
-          <div class="field">
-            <label for="step-details">Step details (optional)</label>
-            <div class="control">
-                <input class="input" type="text" name="step-details" id="step-details" autofocus required>
+        <div id="add-step-fieldsets">
+          <fieldset>
+            <legend>Step 1</legend>
+            <div class="field">
+              <label for="step-details">Step details (optional)</label>
+              <div class="control">
+                  <input class="input step-detail" type="text" name="step-details" autofocus required>
+              </div>
+              <p id="stepDetailsError" class="error"></p>
             </div>
-            <p id="stepDetailsError" class="error"></p>
-          </div>
-
-          <div class="field">
-            <label for="step-details">Stitches*</label>
-            <div class="control">
-                <input class="input" type="text" name="step-stitches" id="step-stitches" autofocus required>
+            <div class="field">
+              <label for="step-details">Stitches*</label>
+              <div class="control">
+                  <input class="input step-stitch" type="text" name="step-stitches" id="step-stitches" autofocus required>
+              </div>
+              <p id="stitchesError" class="error"></p>
             </div>
-            <p id="stitchesError" class="error"></p>
-          </div>
-        </fieldset>
+          </fieldset>
+        </div>
         
         <button class="button" id="add-another-step">Add another step</button>
         
@@ -182,24 +183,28 @@
         <button class="button" id="edit-image-upload">Choose an image to upload (optional)</button>
         <p id="editImageError" class="error"></p>
 
-        <fieldset>
-          <legend>Step 1</legend>
-          <div class="field">
-            <label for="step-details">Step details (optional)</label>
-            <div class="control">
-                <input class="input" type="text" name="step-details" id="edit-step-details" autofocus required>
+        <div id="edit-step-fieldsets">
+          <fieldset class="editable-steps">
+            <legend>Step 1</legend>
+            <div class="field">
+              <label for="step-details">Step details (optional)</label>
+              <div class="control">
+                  <input class="input edit-step-detail" type="text" name="step-details" autofocus required>
+              </div>
             </div>
-            <p id="editStepDetailsError" class="error"></p>
-          </div>
 
-          <div class="field">
-            <label for="step-details">Stitches*</label>
-            <div class="control">
-                <input class="input" type="text" name="step-stitches" id="edit-step-stitches" autofocus required>
+            <div class="field">
+              <label for="step-details">Stitches*</label>
+              <div class="control">
+                  <input class="input edit-step-stitch" type="text" name="step-stitches" autofocus required>
+              </div>
+              
             </div>
-            <p id="editStitchesError" class="error"></p>
-          </div>
-        </fieldset>
+          </fieldset>
+        </div>
+
+        <p id="editStitchesError" class="error"></p>
+        <p id="editStepDetailsError" class="error"></p>
         
         <button class="button" id="edit-add-another-step">Add another step</button>
         
@@ -215,34 +220,36 @@
       <h4>Repeat these steps:</h4>
 
       <form id="add-repeat-form">
-        <label class="checkbox">
-          <input type="checkbox" value="1" class="repeat-checkbox">Step 1: Row 1 (RS): *K1, P1, K1, P1; rep from * to end of row.
-        </label>
-        <label class="checkbox">
-          <input type="checkbox" value="2" class="repeat-checkbox">Step 2: Row 2 (WS): * P2, k2; rep from * to end of row.
-        </label>
-        <label class="checkbox">
-          <input type="checkbox" value="3" class="repeat-checkbox">Row 3 (WS): * P2, k2; rep from * to end of row.
-        </label>
-        <label class="checkbox">
-          <input type="checkbox" value="4" class="repeat-checkbox">Row 4 (WS): * P2, k2; rep from * to end of row.
-        </label>
-        <label class="checkbox">
-          <input type="checkbox" value="5" class="repeat-checkbox">Row 5 (WS): * P2, k2; rep from * to end of row.
-        </label>
-        <label class="checkbox">
-          <input type="checkbox" value="6" class="repeat-checkbox">Row 6 (WS): * P2, k2; rep from * to end of row.
-        </label>
-        <label class="checkbox">
-          <input type="checkbox" value="7" class="repeat-checkbox">Row 7 (WS): * P2, k2; rep from * to end of row.
-        </label>
-        <label class="checkbox">
-          <input type="checkbox" value="8" class="repeat-checkbox">Row 8 (WS): * P2, k2; rep from * to end of row.
-        </label>
+        <div id="repeat-checkboxes">
+          <label class="checkbox">
+            <input type="checkbox" value="1" class="repeat-checkbox">Step 1: Row 1 (RS): *K1, P1, K1, P1; rep from * to end of row.
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" value="2" class="repeat-checkbox">Step 2: Row 2 (WS): * P2, k2; rep from * to end of row.
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" value="3" class="repeat-checkbox">Row 3 (WS): * P2, k2; rep from * to end of row.
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" value="4" class="repeat-checkbox">Row 4 (WS): * P2, k2; rep from * to end of row.
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" value="5" class="repeat-checkbox">Row 5 (WS): * P2, k2; rep from * to end of row.
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" value="6" class="repeat-checkbox">Row 6 (WS): * P2, k2; rep from * to end of row.
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" value="7" class="repeat-checkbox">Row 7 (WS): * P2, k2; rep from * to end of row.
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" value="8" class="repeat-checkbox">Row 8 (WS): * P2, k2; rep from * to end of row.
+          </label>
+        </div>
         <p id="repeatStepsError" class="error"></p>
 
         <label class="numeric">
-          <input type="number" value="1" id="repeat-number">times
+          <input type="number" value="1" min="1" id="repeat-number">times
         </label>
         
         <div class="is-grouped">

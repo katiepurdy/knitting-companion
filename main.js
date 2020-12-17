@@ -1,4 +1,4 @@
-const { app, dialog, BrowserWindow, Menu, ipcMain, ipcRenderer } = require('electron');
+const { app, dialog, BrowserWindow, Menu, ipcMain } = require('electron');
 const Settings = require('./settings.js');
 const path = require('path');
 const fs = require('fs');
@@ -11,6 +11,7 @@ const knex = require('knex')({
 	useNullAsDefault: true
 });
 
+// Get the path for user preferences and uploaded images
 const userDataPath = app.getPath('userData');
 
 // Define default user preferences
@@ -18,18 +19,35 @@ const settings = new Settings({
 	configName: 'user-preferences',
 	defaults: {
 		windowBounds: { width: 803, height: 603 },
-		patternImageName: path.join(userDataPath, 'default.png'),
-		patternId: 1,
-		step: 1,
-		totalSteps: 8,
-		repeat: {
-			active: false,
-			position: 0,
-			count: 0,
-			steps: []
-		}
+		// imagePath: path.join(userDataPath, 'default.png'),
+		// patternId: 0,
+		// step: 1,
+		// totalSteps: 8,
+		// repeat: {
+		// 	active: false,
+		// 	position: 0,
+		// 	count: 0,
+		// 	steps: []
+		// }
 	}
 });
+
+let initialState = {
+	patternImageName: path.join(userDataPath, 'default.png'),
+	patternId: 0,
+	step: 1,
+	totalSteps: 0,
+	repeat: {
+		active: false,
+		position: 0,
+		count: 0,
+		steps: []
+	}
+};
+
+// No pattern previously selected
+if (settings.get('patternId') == 0);
+saveCurrentState(initialState);
 
 let mainWindow;
 
@@ -56,51 +74,38 @@ ipcMain.on('imageUploadButtonClicked', (e) => {
 				 // Display error to user
 				 e.sender.send('selected-file', 'Invalid file extension (must be .png, .jpg, .jpeg, or .gif)');
 			 }
-			
 		} else {
 			e.sender.send('selected-file', 'Selected file: No file selected');
 		}
  }).catch(err => console.log(err));
 });
 
-// Get the patterns from the database and send them to the main window
+// Log the contents of the database to the console
 let readDB = () => {
-	//let result = knex.select('*').from('patterns');
-	// result.then((patterns) => { 
-	// 	console.log(patterns);
-	// 	//mainWindow.webContents.send('item:add', patterns);
-	// });
-	// knex('patterns')
-  // .join('steps', 'patterns.pattern_id', '=', 'steps.pattern_id')
-	// .select('*')
+	let result = knex.select('*').from('patterns');
+		result.then((data) => {
+			console.log(data);
+		}).catch((err) => console.log(err));
+
+	// Insert a new pattern
+	// const newPattern = {
+	// 	name: 'Yet another pattern',
+	// 	imagePath: path.join(userDataPath, 'default.png'),
+	// 	steps: JSON.stringify([
+	// 		{
+	// 			details: 'After casting on 80 stitches on size 2 needles:',
+	// 			stitches: 'Row 1 (RS): * K5, P1, K1, P1; rep from * to end of row.'
+	// 		},
+	// 		{
+	// 			details: '',
+	// 			stitches: 'Row 2 (WS): * P2, k2; rep from * to end of row.'
+	// 		}
+	// 	])
+	// }
+
 	
-	// Get all the steps
-	// let result = knex.join('steps', 'patterns.pattern_id', '=', 'steps.pattern_id')
-	// .select('*').from('patterns')
-	// result.then((data) => console.log('', data))
-	// .catch((err) => console.log(err));
-
-	// Get all the patterns
-	let result = knex.select('*').from('patterns')
-	result.then((data) => console.log('', data))
-	.catch((err) => console.log(err));
-
-	// let result = knex.select('*').from('patterns')
-	// result.then((data) => {
-	// 	console.log('', data);
-	// 	mainWindow.webContents.send(data)
-	// }).catch((err) => console.log(err));
-
-	// If there are no patterns, display add pattern form
+		
 }
-
-// Get all patterns from the database
-ipcMain.on('get-all-patterns', () => {
-	let result = knex.select('*').from('patterns')
-	result.then((data) => {
-		mainWindow.webContents.send(data)
-	}).catch((err) => console.log(err));
-});
 
 // Main application window
 let createWindow = () => {
@@ -138,11 +143,29 @@ let createWindow = () => {
 		slashes: true
 	}));
 	
-	mainWindow.webContents.on('did-finish-load', () => {
-		// Initiate manipulation of the DOM
-		mainWindow.webContents.send('populate-window', 'go ahead');
-	});
+	// Get and display all of the patterns if they exist in the database
+	let refreshDisplayOfPatterns = () => {
+		const initialState = {};
+		// Get all patterns
+		let result = knex.select('*').from('patterns');
+		result.then((data) => {
+			// If there are patterns in the database
+			if (data.length > 0) {
+				// Display them
+				mainWindow.webContents.send('populate-window', data);
+			} else {
+				displayAddNewPatternForm();
+			}
+		}).catch((err) => console.log(err));
+	}
 
+	// Request a specific pattern to display
+	ipcMain.on('refresh-patterns', refreshDisplayOfPatterns)
+
+	// Display all patterns once the DOM is loaded
+	mainWindow.webContents.on('did-finish-load', refreshDisplayOfPatterns);
+
+	// Quit the application
 	mainWindow.on('closed', () => app.quit());
 	
 	// Preserve the state of the application in user preferences
@@ -168,20 +191,23 @@ let createWindow = () => {
 		saveCurrentState(state);
 	});
 
-	// Add pattern
-	ipcMain.on('add-pattern', (e, newPattern) => {
-		knex('patterns')
-			.insert(newPattern)
-			.catch(err => console.log(err))
-			.then(() => readDB());
+	// Save new pattern to the database
+	ipcMain.on('save-new-pattern', (e, newPattern) => {
+		// knex('patterns')
+		// 	.insert(newPattern)
+		// 	.catch(err => console.log(err))
+		// 	.then(refreshDisplayOfPatterns);
+		console.log('Attempting to save new pattern', newPattern);
 	});
 
-	ipcMain.on('edit-pattern', (e, updatedPattern) => {
-		knex('patterns')
-			.where({ 'pattern_id': id })
-			.update(item)
-			.catch(err => console.log(err))
-			.then(() => readDB());
+	// Save edited pattern to the database
+	ipcMain.on('save-edited-pattern', (e, editedPattern, id) => {
+		// knex('patterns')
+		// 	.where({ 'id': id })
+		// 	.update(editedPattern)
+		// 	.catch(err => console.log(err))
+		// 	.then(refreshDisplayOfPatterns);
+		console.log('Attempting to save edited pattern', editedPattern);
 	});
 
 	let menu = Menu.buildFromTemplate(mainMenuTemplate);
@@ -232,58 +258,17 @@ const mainMenuTemplate = [
 	}
 ];
 
-let getPatternData = () => {
-
-}
-
-ipcMain.on('changePattern', (newPatternId) => {
-	// Get pattern data for this pattern ID
-	// Update current pattern ID
-	// Save current pattern ID as part of user preferences
-	// Display pattern data to user
-});
-
+// Menu item has been selected to add a new pattern
 let displayAddNewPatternForm = () => {
 	mainWindow.webContents.send('display-add-pattern-form');
 }
 
+// Menu item has been selected to edit the current pattern
 let displayEditCurrentPatternForm = () => {
-	// Get the data about the current pattern
-	// const data = knex('patterns')
-	// 	.where({ pattern_id: currentPatternId })
-	// 	.catch(err => console.log(err));
-	// 	// Build the pattern object
-	// 	data.then((pattern) => {
-	// 		const pattern = {
-	// 			name: 'patternName',
-	// 			image: 'imageName',
-	// 			steps: [
-	// 				{
-	// 					number: 1,
-	// 					details: 'a step detail',
-	// 					stitches: 'some stitches'
-	// 				},
-	// 				{
-	// 					number: 2,
-	// 					details: 'another step detail',
-	// 					stitches: 'some more stitches'
-	// 				}
-	// 			]
-	// 		};
-			// Display the data to the user
-			mainWindow.webContents.send('display-edit-pattern-form', pattern);
-		// });
-	
-		// let data = knex('patterns')
-		// 	.where({ id: id })
-		// 	.catch(err => console.log(err));
-		// data.then((wines) => {
-		// 	editWindow.webContents.on('did-finish-load', () => {
-		// 		editWindow.webContents.send('editData', wines[0]);
-		// 	});
-		// });
+	mainWindow.contents.send('display-edit-pattern-form');
 }
 
+// Show a dialog box before deleting the current pattern
 let confirmCurrentPatternDelete = () => {
 	dialog.showMessageBox({
 		type: 'warning',
@@ -293,16 +278,17 @@ let confirmCurrentPatternDelete = () => {
 		message: 'Are you sure you want to delete the current pattern?'
 	}).then((dialog) => {
 		if (dialog.response) {
-			// Proceed with deletion of pattern
+			// Proceed with deletion of pattern and associated steps
 			// knex('patterns')
-			// 	.where({ pattern_id: currentPatternId })
+			// 	.where({ id: currentPatternId })
 			// 	.del()
 			// 	.catch(err => console.log(err));
-			console.log('Deletion confirmed');
+			console.log('Deletion confirmed. id: ${currentPatternId}');
 		}
 	}).catch((err) => console.log(err));
 }
 
+// Show a dialog box before abandoning the current repeat
 let confirmRepeatAbandon = (e, stepToJumpTo) => {
 	dialog.showMessageBox({
 		type: 'warning',
@@ -318,6 +304,7 @@ let confirmRepeatAbandon = (e, stepToJumpTo) => {
 	}).catch((err) => console.log(err));
 }
 
+// Notify the user that they're about to abandon the current repeat
 ipcMain.on('confirm-repeat-abandon', confirmRepeatAbandon);
 
 // Create the main window
