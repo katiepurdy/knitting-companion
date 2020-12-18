@@ -135,8 +135,8 @@
             <p id="nameError" class="error"></p>
         </div>
 
-        <p id="uploaded-image-path"></p>
-        <button class="button" id="image-upload">Choose an image to upload (optional)</button>
+        <p id="image-path"></p>
+        <button class="button" type="button" id="image-upload">Choose an image to upload (optional)</button>
         <p id="imageError" class="error"></p>
 
         <div id="add-step-fieldsets">
@@ -159,7 +159,7 @@
           </fieldset>
         </div>
         
-        <button class="button" id="add-another-step">Add another step</button>
+        <button class="button" type="button" id="add-another-step">Add another step</button>
         
         <div class="is-grouped">
           <button class="button" type="button" id="save-add-pattern">Save</button>
@@ -180,11 +180,11 @@
         </div>
 
         <p id="edit-uploaded-image-path"></p>
-        <button class="button" id="edit-image-upload">Choose an image to upload (optional)</button>
+        <button class="button" type="button" id="edit-image-upload">Choose a different image to upload (optional)</button>
         <p id="editImageError" class="error"></p>
 
         <div id="edit-step-fieldsets">
-          <fieldset class="editable-steps">
+          <fieldset data-edit-fieldset-id="1" class="editable-steps">
             <legend>Step 1</legend>
             <div class="field">
               <label for="step-details">Step details (optional)</label>
@@ -206,7 +206,7 @@
         <p id="editStitchesError" class="error"></p>
         <p id="editStepDetailsError" class="error"></p>
         
-        <button class="button" id="edit-add-another-step">Add another step</button>
+        <button class="button" type="button" id="edit-add-another-step">Add another step</button>
         
         <div class="is-grouped">
           <button class="button" type="button" id="save-edit-pattern">Save</button>
@@ -217,9 +217,9 @@
     
     <div id="right-section-add-repeat" class="right-section">
       <h2>Add a Repeat</h2>
-      <h4>Repeat these steps:</h4>
-
       <form id="add-repeat-form">
+        <div id="add-pattern-repeat-form-errors" class="error"></div>
+        <h4>Repeat these steps:</h4>
         <div id="repeat-checkboxes">
           <label class="checkbox">
             <input type="checkbox" value="1" class="repeat-checkbox">Step 1: Row 1 (RS): *K1, P1, K1, P1; rep from * to end of row.
