@@ -18,23 +18,13 @@ const userDataPath = app.getPath('userData');
 const settings = new Settings({
 	configName: 'user-preferences',
 	defaults: {
-		windowBounds: { width: 803, height: 603 },
-		// imagePath: path.join(userDataPath, 'default.png'),
-		// patternId: 0,
-		// step: 1,
-		// totalSteps: 8,
-		// repeat: {
-		// 	active: false,
-		// 	position: 0,
-		// 	count: 0,
-		// 	steps: []
-		// }
+		windowBounds: { width: 803, height: 603 }
 	}
 });
 
 let initialState = {
 	patternImageName: path.join(userDataPath, 'default.png'),
-	patternId: 0,
+	patternId: 1,
 	step: 1,
 	totalSteps: 0,
 	repeat: {
@@ -45,9 +35,28 @@ let initialState = {
 	}
 };
 
+// Preserve the state of the application in user preferences
+let saveCurrentState = (currentState) => {
+	console.log('Saving state', currentState);
+	if (currentState.patternImageName) {
+		settings.set('patternImageName', currentState.patternImageName);
+	} else if (currentState.patternId) {
+		settings.set('patternId', currentState.patternId);
+	} else if (currentState.step) {
+		settings.set('step', currentState.step);
+	} else if (currentState.step) {
+		settings.set('totalSteps', currentState.totalSteps);
+	} else if (currentState.repeat) {
+		settings.set('repeat', currentState.repeat);
+	} else {
+		console.log('Current state not saved.');
+	}
+}
+
 // No pattern previously selected
-if (settings.get('patternId') == 0);
-saveCurrentState(initialState);
+if (settings.get('patternId') === undefined) {
+	saveCurrentState(initialState);
+}
 
 let mainWindow;
 
@@ -86,25 +95,6 @@ let readDB = () => {
 		result.then((data) => {
 			console.log(data);
 		}).catch((err) => console.log(err));
-
-	// Insert a new pattern
-	// const newPattern = {
-	// 	name: 'Yet another pattern',
-	// 	imagePath: path.join(userDataPath, 'default.png'),
-	// 	steps: JSON.stringify([
-	// 		{
-	// 			details: 'After casting on 80 stitches on size 2 needles:',
-	// 			stitches: 'Row 1 (RS): * K5, P1, K1, P1; rep from * to end of row.'
-	// 		},
-	// 		{
-	// 			details: '',
-	// 			stitches: 'Row 2 (WS): * P2, k2; rep from * to end of row.'
-	// 		}
-	// 	])
-	// }
-
-	
-		
 }
 
 // Main application window
@@ -145,14 +135,13 @@ let createWindow = () => {
 	
 	// Get and display all of the patterns if they exist in the database
 	let refreshDisplayOfPatterns = () => {
-		const initialState = {};
 		// Get all patterns
 		let result = knex.select('*').from('patterns');
 		result.then((data) => {
 			// If there are patterns in the database
 			if (data.length > 0) {
 				// Display them
-				mainWindow.webContents.send('populate-window', data);
+				mainWindow.webContents.send('populate-window', data, initialState);
 			} else {
 				displayAddNewPatternForm();
 			}
@@ -167,24 +156,6 @@ let createWindow = () => {
 
 	// Quit the application
 	mainWindow.on('closed', () => app.quit());
-	
-	// Preserve the state of the application in user preferences
-	let saveCurrentState = (currentState) => {
-		console.log('saving state', currentState);
-		if (currentState.patternImageName) {
-			settings.set('patternImageName', currentState.patternImageName);
-		} else if (currentState.patternId) {
-			settings.set('patternId', currentState.patternId);
-		} else if (currentState.step) {
-			settings.set('step', currentState.step);
-		} else if (currentState.step) {
-			settings.set('totalSteps', currentState.totalSteps);
-		} else if (currentState.repeat) {
-			settings.set('repeat', currentState.repeat);
-		} else {
-			console.log('Current state not saved.');
-		}
-	}
 
 	// Handle request from the mainWindow to save its state
 	ipcMain.on('save-current-state', (e, state) => {
@@ -270,26 +241,39 @@ let displayEditCurrentPatternForm = () => {
 
 // Show a dialog box before deleting the current pattern
 let confirmCurrentPatternDelete = () => {
-	dialog.showMessageBox({
-		type: 'warning',
-		buttons: ['No', 'Yes'],
-		defaultId: 0,
-		title: 'Delete current pattern',
-		message: 'Are you sure you want to delete the current pattern?'
-	}).then((dialog) => {
-		if (dialog.response) {
-			// Proceed with deletion of pattern and associated steps
-			// knex('patterns')
-			// 	.where({ id: currentPatternId })
-			// 	.del()
-			// 	.catch(err => console.log(err));
-			console.log('Deletion confirmed. id: ${currentPatternId}');
-		}
-	}).catch((err) => console.log(err));
+	// If there is no current pattern, notify the user
+	if (settings.get('patternId' === 1)) {
+		dialog.showMessageBox({
+			type: 'warning',
+			buttons: ['Okay'],
+			defaultId: 0,
+			title: 'Can not delete Sample Pattern',
+			message: 'The initial Sample Pattern cannot be deleted.'
+		}).then((dialog) => console.log('Dialog closed with "Okay"'))
+		.catch((err) => console.log(err));
+	} else {
+		dialog.showMessageBox({
+			type: 'warning',
+			buttons: ['No', 'Yes'],
+			defaultId: 0,
+			title: 'Delete current pattern',
+			message: 'Are you sure you want to delete the current pattern?'
+		}).then((dialog) => {
+			if (dialog.response) {
+				// Proceed with deletion of pattern and associated steps
+				// knex('patterns')
+				// 	.where({ id: currentPatternId })
+				// 	.del()
+				// 	.catch(err => console.log(err));
+				const id = settings.get('patternId');
+				console.log('Deletion confirmed. id: ${id}');
+			}
+		}).catch((err) => console.log(err));
+	}
 }
 
 // Show a dialog box before abandoning the current repeat
-let confirmRepeatAbandon = (e, stepToJumpTo) => {
+let confirmRepeatAbandon = (e) => {
 	dialog.showMessageBox({
 		type: 'warning',
 		buttons: ['No', 'Yes'],
@@ -298,6 +282,7 @@ let confirmRepeatAbandon = (e, stepToJumpTo) => {
 		message: 'Are you sure you want to abandon the current repeat?'
 	}).then((dialog) => {
 		if (dialog.response) {
+			const stepToJumpTo = settings.get(repeat.position);
 			mainWindow.webContents.send('abandon-repeat', stepToJumpTo);
 			console.log(`Abandon repeat confirmed. Jump to ${stepToJumpTo}`);
 		}

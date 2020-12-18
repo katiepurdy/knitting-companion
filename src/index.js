@@ -1,23 +1,12 @@
 const { ipcRenderer } = require('electron');
 
-let currentState = {
-	patternImageName: '../assets/images/default.png',
-	patternId: 1,
-	step: 1,
-	totalSteps: 8,
-	repeat: {
-		active: false,
-		position: 0,
-		count: 0,
-		steps: []
-	}
-}
+let currentState = {};
 
+console.log(currentState);
 // Log the current state to the console during every click for development purposes
 document.getElementById('body').addEventListener('click', () => {
 	console.log(currentState);
 })
-
 
 // SELECTORS -----------------------------------------------------------------
 
@@ -96,7 +85,12 @@ let getAddRepeatFormErrors = () => {
 	const errors = [];
 	const allCheckboxes = document.getElementsByClassName('repeat-checkbox');
 	const repeatNumber = document.getElementById('repeat-number').value;
-	const checkedCheckboxes = allCheckboxes.filter((checkbox) => checkbox.checked);
+	const checkedCheckboxes = [];
+	for (let i = 0; i < allCheckboxes.length; i++) {
+		if (allCheckboxes[i].checked) {
+			checkedCheckboxes.push(allCheckboxes[i]);
+		}
+	}
 	if (checkedCheckboxes.length === 0) {
 		errors.push({ 'repeatStepsError': 'Please check at least one step to repeat' });
 	}
@@ -110,7 +104,7 @@ let getAddRepeatFormErrors = () => {
 let refreshCurrentPosition = () => {
 	const currentPosition = document.getElementById('current-position');
 	const currentPositionContents = `
-		<h2>Currently on Step ${currentState.currentStep} ${(currentState.repeat.active) ? '(Repeat ${currentState.repeat.position} of ${currentState.repeat.count})' : ''}</h2>
+		<h2>Currently on Step ${currentState.step} ${(currentState.repeat.active) ? '(Repeat ${currentState.repeat.position} of ${currentState.repeat.count})' : ''}</h2>
 	`;
 	currentPosition.innerHTML = currentPositionContents;
 }
@@ -138,6 +132,112 @@ let visuallyChangeStep = () => {
 	refreshCurrentPosition();
 }
 
+// Event listeners must be re-attached after displaying a different pattern
+let attachEventListeners = () => {
+	// Individual step buttons
+	const individualStepButtons = document.getElementsByClassName('step-button');
+	for (let i = 0; i < individualStepButtons.length; i++) {
+		individualStepButtons[i].addEventListener('click', isRepeatActive);
+	}
+
+	// User selects a different pattern from the select box
+	patternSelect.addEventListener('change', (e) => {
+		const patternId = parseInt(e.target.options[e.target.selectedIndex].dataset.patternId);
+		console.log('patternid', patternId);
+		currentState.patternId = patternId;
+		currentState.step = 1;
+		currentState.totalSteps = 0;
+		currentState.repeat = {
+			active: false,
+			position: 0,
+			count: 0,
+			steps: []
+		}
+		saveCurrentState();
+		// Refresh the display of patterns
+		ipcRenderer.send('refresh-patterns');
+	});
+
+	// Abandon the current repeat or create a new one
+	toggleRepeatButton.addEventListener('click', () => {
+		if (currentState.repeat.active) {
+			ipcRenderer.send('confirm-repeat-abandon', currentState.step);
+		} else {
+			// Display the add repeat form while hiding others
+			defaultSection.style.display = 'none';
+			addPatternSection.style.display = 'none';
+			editPatternSection.style.display = 'none';
+			addPatternRepeatSection.style.display = 'flex';
+		}
+	});
+
+	// Add another fieldset to the add pattern form
+	addAnotherStepButton.addEventListener('click', () => {
+		appendFieldsetToAddPatternForm();
+	});
+
+	// Add another fieldset to the edit pattern form
+	editAddAnotherStepButton.addEventListener('click', () => {
+		appendFieldsetToEditPatternForm();
+	});
+
+	// Go to the previous step
+	previousStepButton.addEventListener('click', () => {
+		currentState.totalSteps = document.getElementsByClassName('step').length;
+		// Loop back to the last if on step 1
+		if (currentState.step === 1) {
+			currentState.step = currentState.totalSteps;
+		} else if (currentState.step !== 1) {
+			// Or just go to the current step minus 1
+			currentState.step = currentState.step - 1;
+		}
+		visuallyChangeStep();
+		saveCurrentState();
+	});
+
+	// Go to the next step
+	nextStepButton.addEventListener('click', () => {
+		currentState.totalSteps = document.getElementsByClassName('step').length;
+		// Loop back to step 1 if on the last step
+		if (currentState.step === currentState.totalSteps) {
+			currentState.step = 1;
+		} else if (currentState.step < currentState.totalSteps) {
+			// Or just go to the current step plus 1
+			currentState.step = currentState.step + 1;
+		}
+		visuallyChangeStep();
+		saveCurrentState();
+	});
+
+	// Add click events for image upload buttons
+	imageUploadButton.addEventListener('click', (e) => {
+		ipcRenderer.send('imageUploadButtonClicked');
+	});
+	editImageUploadButton.addEventListener('click', (e) => {
+		ipcRenderer.send('imageUploadButtonClicked');
+	});
+
+	// Submit form values to database or user preferences if there are no validation errors
+	saveAddPatternButton.addEventListener('click', saveAddPattern);
+	saveEditedPatternButton.addEventListener('click', saveEditedPattern);
+	saveRepeatButton.addEventListener('click', saveRepeat);
+
+	// Add click events for form cancel buttons
+	cancelAddButton.addEventListener('click', cancelForm);
+	cancelEditButton.addEventListener('click', cancelForm);
+	cancelAddRepeatButton.addEventListener('click', cancelForm);
+
+	// Prevent default form submission behavior
+	addPatternForm.addEventListener('onsubmit', (e) => {
+		e.preventDefault();
+	});
+	editPatternForm.addEventListener('onsubmit', (e) => {
+		e.preventDefault();
+	});
+	addRepeatForm.addEventListener('onsubmit', (e) => {
+		e.preventDefault();
+	});
+}
 // Display all patterns in the select dropdown, if available
 let populatePatternSelectOptions = (patterns) => {
 	patternSelect.innerHTML = '';
@@ -145,42 +245,58 @@ let populatePatternSelectOptions = (patterns) => {
 	patterns.forEach((pattern) => {
     let option = document.createElement("option");
     option.textContent = pattern.name;
-		option.value = pattern.pattern_id;
-		option.dataset.patternId = pattern.pattern_id;
-		if (pattern.pattern_id === currentState.patternId) {
+		option.value = pattern.id;
+		option.dataset.patternId = pattern.id;
+		if (pattern.id === currentState.patternId) {
 			option.selected = true;
 		}
     patternSelect.appendChild(option);
 	});
 }
 
-// Fill the screen with information from the database, if available
-let populateWindow = (e, allPatterns) => {
-	// Initially update the current state from user preferences or defaults
+let isEmpty = object => {
+	for(var key in object) {
+		if(object.hasOwnProperty(key)) {
+			return false;
+		}
+	}
+	return true;
+}
 
+// Fill the screen with information from the database, if available
+let populateWindow = (e, allPatterns, initialState) => {
+	// Initially update the current state from user preferences or defaults after the application has been closed
+	if (isEmpty(currentState)) {
+		currentState = initialState;
+	}
+	saveCurrentState();
 	// Find the steps for currently selected pattern
-	let selectedPattern = allPatterns.filter(pattern => pattern.id === currentState.patternId);
+	let selectedPattern = allPatterns.filter(pattern => pattern.id === currentState.patternId)[0];
+	console.log(selectedPattern);
 	let steps = JSON.parse(selectedPattern.steps);
+	currentState.totalSteps = steps.length;
 
 	populatePatternSelectOptions(allPatterns);
 
 	// Append an individual step button for each step
 	const individualStepButtonsUl = document.getElementById('individual-step-buttons');
-	const individualStepButtons = '';
+	let individualStepButtonsUlContents = '';
 	steps.forEach((step, index) => {
-		individualStepButtons += `
-			<li><button class="button step-button ${(index === currentState.currentStep) ? 'active' : ''}">${index}</button></li>
+		let stepNumber = index + 1;
+		individualStepButtonsUlContents += `
+			<li><button class="button step-button ${(stepNumber === currentState.step) ? 'active' : ''}">${stepNumber}</button></li>
 		` 
 	});
-	individualStepButtonsUl.appendChild(individualStepButtons);
+	individualStepButtonsUl.innerHTML = individualStepButtonsUlContents;
 
 	// Append the list of steps to the left section
 	const leftSection = document.getElementById('left-section');
-	const leftSectionContents = '';
+	let leftSectionContents = '';
 	steps.forEach((step, index) => {
+		let stepNumber = index + 1;
 		leftSectionContents += `
-			<div data-step-id="${index}" class="step ${(index === currentState.currentStep) ? 'active' : ''}">
-				<h3 class="step-number">Step ${index}</h3>
+			<div data-step-id="${stepNumber}" class="step ${(stepNumber === currentState.step) ? 'active' : ''}">
+				<h3 class="step-number">Step ${stepNumber}</h3>
 				<div>
 					<p class="details">${step.details}</p>
 					<p class="stitches">${step.stitches}</p>
@@ -194,15 +310,18 @@ let populateWindow = (e, allPatterns) => {
 
 	// Display pattern image
 	const rightSectionDefault = document.getElementById('right-section-default');
-	const rightSectionDefaultContents = `
+	let rightSectionDefaultContents = `
 		<img src="${currentState.patternImageName}" id="pattern-image" />
 	`;
 	rightSectionDefault.innerHTML = rightSectionDefaultContents;
 
+	resetForms();
+
 	// Include pattern data in the edit form
 	const editPatternForm = document.getElementById('edit-pattern-form');
-	const editPatternFormContents = `
+	let editPatternFormContents = `
 		<div class="field">
+			<div id="edit-pattern-form-errors" class="error"></div>
 			<label for="pattern-name">Pattern Name*</label>
 			<div class="control">
 					<input class="input" type="text" name="pattern-name" id="edit-pattern-name" required>
@@ -238,15 +357,18 @@ let populateWindow = (e, allPatterns) => {
 
 	// Add steps to the add repeat form
 	const repeatCheckboxes = document.getElementById('repeat-checkboxes');
-	const repeatCheckboxesContents = '';
+	let repeatCheckboxesContents = '';
 	steps.forEach((step, index) => {
+		let stepNumber = index + 1;
 		repeatCheckboxesContents += `
 			<label class="checkbox">
-				<input type="checkbox" value="${index}" class="repeat-checkbox">Step ${index}: ${step.stitches}
+				<input type="checkbox" value="${stepNumber}" class="repeat-checkbox">Step ${stepNumber}: ${step.stitches}
 			</label>
 		` 
 	});
 	repeatCheckboxes.innerHTML = repeatCheckboxesContents;
+
+	attachEventListeners();
 }
 
 // Reset the repeat values to default
@@ -264,6 +386,7 @@ let removeRepeat = () => {
 // Check if the repeat is active for the current pattern before taking any action
 let isRepeatActive = (e) => {
 	const targetStep = parseInt(e.target.innerText);
+	console.log('target step', targetStep);
 	// Jumping to a step erases the current repeat
 	if (currentState.repeat.active) {
 		// Get confirmation from user
@@ -449,64 +572,13 @@ let resetForms = () => {
 			<button class="button" id="cancel-repeat" type="button">Cancel</button>
 		</div>
 	`;
+	attachEventListeners();
 }
 
 let cancelForm = () => {
 	displayDefaultSection();
 	resetForms();
 }
-
-// INTERPROCESS COMMUNICATION ------------------------------------------------
-
-// Fill the screen with information from the database and user preferences, if available
-ipcRenderer.on('populate-window', populateWindow);
-
-// User has confirmed they want to abandon the current repeat
-ipcRenderer.on('abandon-repeat', (e, targetStep) => {
-	removeRepeat();
-	if (targetStep !== 0) {
-		jumpToTargetStep(targetStep);
-	}
-});
-
-// User has chosen a file through the dialog box
-ipcRenderer.on('selected-file', (e, data) => {
-	const pathParagraph = document.getElementById('uploaded-image-path');
-	pathParagraph.textContent = data;
-});
-
-// Display add pattern form
-ipcRenderer.on('display-add-pattern-form', () => {
-	resetForms();
-	// Display the form while ensuring others are hidden
-	defaultSection.style.display = 'none';
-	addPatternSection.style.display = 'flex';
-	editPatternSection.style.display = 'none';
-	addPatternRepeatSection.style.display = 'none'
-});
-
-// Display edit pattern form
-ipcRenderer.on('display-edit-pattern-form', () => {
-	// Display the form while ensuring others are hidden
-	defaultSection.style.display = 'none';
-	addPatternSection.style.display = 'none';
-	editPatternSection.style.display = 'flex';
-	addPatternRepeatSection.style.display = 'none';
-});
-
-// EVENT LISTENERS -----------------------------------------------------------
-
-// Prevent default form submission behavior
-addPatternForm.addEventListener('onsubmit', (e) => {
-	e.preventDefault();
-});
-editPatternForm.addEventListener('onsubmit', (e) => {
-	e.preventDefault();
-});
-addRepeatForm.addEventListener('onsubmit', (e) => {
-	e.preventDefault();
-});
-
 
 let saveAddPattern = () => {
 	// Get the form values
@@ -541,9 +613,11 @@ let saveAddPattern = () => {
 		ipcRenderer.send('save-new-pattern', newPattern);
 	} else {
 		const errorsDiv = document.getElementById('add-pattern-form-errors');
+		let errorsDivContents = '';
 		errors.forEach((error) => {
-			errorsDiv.appendChild(`<p>${error}</p>`);
+			errorsDivContents += `<p>${error}</p>`;
 		});
+		errorsDiv.innerHTML = errorsDivContents;
 	}
 }
 
@@ -586,9 +660,11 @@ let saveEditedPattern = () => {
 		ipcRenderer.send('save-edited-pattern', editedPattern, currentState.patternId);
 	} else {
 		const errorsDiv = document.getElementById('edit-pattern-repeat-form-errors');
+		let errorsDivContents = '';
 		errors.forEach((error) => {
-			errorsDiv.appendChild(`<p>${error}</p>`);
+			errorsDivContents += `<p>${error}</p>`;
 		});
+		errorsDiv.innerHTML = errorsDivContents;
 	}
 }
 
@@ -611,92 +687,49 @@ let saveRepeat = () => {
 		saveCurrentState();
 	} else {
 		const errorsDiv = document.getElementById('add-pattern-repeat-form-errors');
+		let errorsDivContents = '';
 		errors.forEach((error) => {
-			errorsDiv.appendChild(`<p>${error}</p>`);
+			errorsDivContents += `<p>${error}</p>`;
 		});
+		errorsDiv.innerHTML = errorsDivContents;
 	}
 }
 
-// User selects a different pattern from the select box
-patternSelect.addEventListener('change', (e) => {
-	const patternId = e.target.options[e.target.selectedIndex].dataset.patternId;
-	// Save state to user preferences before it's overwritten
-	saveCurrentState();
-	currentState.patternId = patternId;
-	// Refresh the display of patterns
-	ipcRenderer.send('refresh-patterns');
-});
 
-// Abandon the current repeat or create a new one
-toggleRepeatButton.addEventListener('click', () => {
-	if (currentState.repeat.active) {
-		ipcRenderer.send('confirm-repeat-abandon', currentState.step);
-	} else {
-		// Display the add repeat form while hiding others
-		defaultSection.style.display = 'none';
-		addPatternSection.style.display = 'none';
-		editPatternSection.style.display = 'none';
-		addPatternRepeatSection.style.display = 'flex';
+// INTERPROCESS COMMUNICATION ------------------------------------------------
+
+// Fill the screen with information from the database and user preferences, if available
+ipcRenderer.on('populate-window', populateWindow);
+
+// User has confirmed they want to abandon the current repeat
+ipcRenderer.on('abandon-repeat', (e) => {
+	removeRepeat();
+	if (targetStep !== 0) {
+		jumpToTargetStep(targetStep);
 	}
 });
 
-// Add another fieldset to the add pattern form
-addAnotherStepButton.addEventListener('click', () => {
-	appendFieldsetToAddPatternForm();
+// User has chosen a file for a new pattern through the dialog box
+ipcRenderer.on('selected-file', (e, path) => {
+	const pathParagraph = document.getElementById('uploaded-image-path');
+	pathParagraph.textContent = path;
 });
 
-// Add another fieldset to the edit pattern form
-editAddAnotherStepButton.addEventListener('click', () => {
-	appendFieldsetToEditPatternForm();
+// Display add pattern form
+ipcRenderer.on('display-add-pattern-form', () => {
+	resetForms();
+	// Display the form while ensuring others are hidden
+	defaultSection.style.display = 'none';
+	addPatternSection.style.display = 'flex';
+	editPatternSection.style.display = 'none';
+	addPatternRepeatSection.style.display = 'none'
 });
 
-// Go to the previous step
-previousStepButton.addEventListener('click', () => {
-	currentState.totalSteps = document.getElementsByClassName('step').length;
-	// Loop back to the last if on step 1
-	if (currentState.step === 1) {
-		currentState.step = currentState.totalSteps;
-	} else if (currentState.step !== 1) {
-		// Or just go to the current step minus 1
-		currentState.step = currentState.step - 1;
-	}
-	visuallyChangeStep();
-	saveCurrentState();
+// Display edit pattern form
+ipcRenderer.on('display-edit-pattern-form', () => {
+	// Display the form while ensuring others are hidden
+	defaultSection.style.display = 'none';
+	addPatternSection.style.display = 'none';
+	editPatternSection.style.display = 'flex';
+	addPatternRepeatSection.style.display = 'none';
 });
-
-// Go to the next step
-nextStepButton.addEventListener('click', () => {
-	currentState.totalSteps = document.getElementsByClassName('step').length;
-	// Loop back to step 1 if on the last step
-	if (currentState.step === currentState.totalSteps) {
-		currentState.step = 1;
-	} else if (currentState.step < currentState.totalSteps) {
-		// Or just go to the current step plus 1
-		currentState.step = currentState.step + 1;
-	}
-	visuallyChangeStep();
-	saveCurrentState();
-});
-
-// Add click events for jumping to steps
-for (let i = 0; i < individualStepButtons.length; i++) {
-	individualStepButtons[i].addEventListener('click', isRepeatActive);
-}
-
-// Add click events for image upload buttons
-imageUploadButton.addEventListener('click', (e) => {
-	ipcRenderer.send('imageUploadButtonClicked');
-});
-editImageUploadButton.addEventListener('click', (e) => {
-	ipcRenderer.send('imageUploadButtonClicked');
-});
-
-// Submit form values to database or user preferences if there are no validation errors
-saveAddPatternButton.addEventListener('click', saveAddPattern);
-saveEditedPatternButton.addEventListener('click', saveEditedPattern);
-saveRepeatButton.addEventListener('click', saveRepeat);
-
-// Add click events for form cancel buttons
-cancelAddButton.addEventListener('click', cancelForm);
-cancelEditButton.addEventListener('click', cancelForm);
-cancelAddRepeatButton.addEventListener('click', cancelForm);
